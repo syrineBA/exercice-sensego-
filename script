@@ -1,0 +1,396 @@
+#!/usr/bin/env python3
+import gzip, tarfile
+import random as rd
+import os
+import threading, multiprocessing, datetime, subprocess
+from os import listdir
+from os.path import isfile
+import shutil
+import boto3
+import requests
+import sys
+def make_tarfile(output_filename, file):
+    with tarfile.open(output_filename, "w:gz") as tar:
+        tar.add(file)
+
+def gunzip(source_filepath, dest_filepath):
+    with gzip.open(source_filepath, 'rb') as f_in:
+        with open(dest_filepath, 'wb') as f_out:
+            try:
+                shutil.copyfileobj(f_in, f_out)
+            except OSError as e:
+                print(e)
+
+
+
+
+
+
+
+
+
+def get_folders(path, topdirs):
+    topdir1 = []
+    topdir2 = []
+    topdir3 = []
+    topdir4 = []
+    list = os.listdir(path)
+    #print(list[0])
+    i = 0
+    while (i < len(os.listdir(path)) - 1):
+        if (0 <= i < int(len(os.listdir(path)) / 4)):
+            i = i + 1
+            topdir1.append(list[i])
+        if (int(len(os.listdir(path)) / 4) <= i < int(len(os.listdir(path)) / 2)):
+            i = i + 1
+            topdir2.append(list[i])
+        if (int(len(os.listdir(path)) / 2) <= i < int(len(os.listdir(path)) * 3 / 4)):
+            i = i + 1
+            topdir3.append(list[i])
+        if (int(len(os.listdir(path)) * 3 / 4) <= i < int(len(os.listdir(path)))):
+            i = i + 1
+            topdir4.append(list[i])
+    topdirs.append(topdir1)
+    topdirs.append(topdir2)
+    topdirs.append(topdir3)
+    topdirs.append(topdir4)
+    return topdirs
+
+
+if __name__ == "__main__":
+
+    # parser = argparse.ArgumentParser()
+    # parser.add_argument('--directory')
+    # parser.add_argument('--idclient')
+    # args = parser.parse_args()
+    # args = vars(args)
+
+    cmd = 'wget -q -O - http://instance-data/latest/meta-data/instance-id'
+    #meec2 = str(os.system(cmd))
+    meec2 = os.popen(cmd).read()
+    id_client = '999404'
+    metim = datetime.datetime.now().strftime("%Y-%m-%d-%H")
+    path = '/opt/app/gone/io/received/' + id_client
+    merand = str(rd.randint(10000000, 99999999))
+    output_file = path + '/readytogo/' + metim + '-' + merand + '.' + meec2
+
+    # KEEP TRACK OF TAR START TIME TO REMOVE LATER FILES
+    if not os.path.exists(path + '/readytogo'):
+        os.makedirs(path + '/readytogo')
+
+    date = get_date()
+
+    start_date = date.strftime("%d-%m-%Y-%H:%M:%S")
+    print('START date = ' + start_date)
+    #with open('/home/syrine/data/log.txt', 'a') as f2:
+    #    f2.write('VEEPEE script started at ' + str(start_date) + '\n')
+    
+   # WE NEED TO CREATE THE FILE OUTPUT_FILE TO AVOID ERROR WHEN THERE IS NO DATA ADDED 
+    with open(output_file, 'a') as f0:
+        pass 
+    q_invalide = multiprocessing.Queue()
+    q_valide = multiprocessing.Queue()
+    lock = threading.Lock()
+
+    finalSum_inv = 0
+    finalSum_v = 0
+    processes = []
+    results_inv = []
+    results_v = []
+
+    topdirs = []
+    topdirs = get_folders(path, topdirs)
+
+    for topdir in topdirs:
+        p = multiprocessing.Process(target=process_json, args=(lock, output_file, topdir, path))
+        p.start()
+        p.join()
+        processes.append(p)
+
+    for p in processes:
+        results_inv.append(q_invalide.get(True))
+        results_v.append(q_valide.get(True))
+
+    #print(results_v)
+    #print(results_inv)
+
+    for element in results_inv:
+        finalSum_inv = finalSum_inv + element
+    for element in results_v:
+        finalSum_v = finalSum_v + element
+    for p in processes:
+        p.join()
+    
+    print(" INVALIDE JSON = " + str(finalSum_inv))
+    print(" VALIDE JSON = " + str(finalSum_v))
+
+    # GET START DATE IN SECOND
+    start_date_second = (date.hour * 60 + date.minute) * 60 + date.second
+    # GET END DATE IN SECOND
+    end_date = get_date().strftime("%d-%m-%Y-%H:%M:%S")
+    #with open('/home/ec2-user/python_script_test/log.txt', 'a') as f2:
+    #    f2.write('VEEPEE script ended at ' + str(end_date) + '\n')
+    
+    # WE NEED TO TEST IF WE HAVE NEW DATA OR WE WILL STOP SCRIPT WE DON'T NEED TO SEND AN EMPTY FILE 
+    size_file = os.path.getsize(output_file)
+    if size_file == 0 : 
+       sys.exit( " THERE IS NO NEW DATA TO ADD FOR THIS CLIENT AND THIS PERIOD " ) 
+       
+    t_end = get_date().time()
+    end_date_second = (t_end.hour * 60 + t_end.minute) * 60 + t_end.second
+    # SEND MONITORING DATA
+    #send_monitoring_data(date, start_date_second, end_date_second, finalSum_v, finalSum_inv, meec2)
+    
+    output_file_name = metim + '-' + merand + '.' + meec2 + ".tar.gz"
+
+    # COMPRESSION DE REPERTOIRE
+    #print(output_file)
+    make_tarfile(output_file+'.ta#!/usr/bin/env python3
+import gzip, tarfile
+import random as rd
+import os
+import threading, multiprocessing, datetime, subprocess
+from os import listdir
+from os.path import isfile
+import shutil
+import boto3
+import requests
+import sys
+def make_tarfile(output_filename, file):
+    with tarfile.open(output_filename, "w:gz") as tar:
+        tar.add(file)
+
+def gunzip(source_filepath, dest_filepath):
+    with gzip.open(source_filepath, 'rb') as f_in:
+        with open(dest_filepath, 'wb') as f_out:
+            try:
+                shutil.copyfileobj(f_in, f_out)
+            except OSError as e:
+                print(e)
+
+
+def json_resutl_test(result_jq, subdir, num_valide_json, num_invalide_json):
+    result = result_jq.split('\\n')
+
+    #  INVALIDE DATA
+    length_result = result[0].replace("b\'", '')
+    result[0] = length_result
+    if ((len(result) <= 2) or length_result == 0 or length_result == "false" or result[1] == '[]' or result[
+        1] == '[null]'):
+        num_invalide_json = num_invalide_json + 1
+
+    # REWRITE DATA
+    elif (result[1] and (len(result) == 3)):
+        json_result = result[1]
+        num_valide_json = num_valide_json + 1
+
+    # OPTIN DATA : !!
+    elif (result_jq == "5"):
+        if (subdir == "wsev"):
+            is_optin = result_jq.find('optin')
+            if (is_optin):
+               pass
+    return result, length_result, result_jq, num_valide_json, num_invalide_json
+
+
+def save_json_result(result_jq, unzipped_file, output_file, subdir, num_valide_json, num_invalide_json):
+    # print("RESULT_JQ : " + result_jq)
+    result = result_jq.split('\\n')
+
+    #  INVALIDE DATA
+    length_result = result[0].replace("b\'", '')
+    result[0] = length_result
+    if ((len(result) <= 2) or length_result == 0 or length_result == "false" or result[1] == '[]' or result[
+        1] == '[null]'):
+        # with open('/home/ec2-user/invalid_json', 'a') as f:
+        #with open('/home/syrine/data/invalid_json', 'a') as f:
+        #    f.write(str(result) + '\n')
+        #    num_invalide_json = num_invalide_json + 1
+        num_invalide_json = num_invalide_json + 1
+        #print("File " + unzipped_file + " is invalide!")
+
+    # REWRITE DATA
+    elif (result[1]):
+        json_result = result[1]
+        with open(output_file, 'a') as f:
+            f.write(str(json_result) + '\n')
+            num_valide_json = num_valide_json + 1
+        #print("File " + unzipped_file + " is valide")
+
+
+    # OPTIN DATA
+    elif (result_jq == "5"):
+        with open(output_file, 'a') as f:
+            f.write(result)
+        if (subdir == "wsev"):
+            is_optin = result_jq.find('optin')
+            if (is_optin):
+                with open(output_file, 'w') as f:
+                    f.write('')
+        #print("File " + unzipped_file + " : OPTIN DATA")
+    else:
+        pass
+        #with open('/opt/app/gone/io/received/999404/log.txt', 'a') as f:
+        #    f.write(str(result) + '\n')
+
+    return num_valide_json, num_invalide_json
+
+
+def get_data(file, subdir, output_file):
+    #print("                  ----- GET DATA ----")
+    num_valide_json = 0
+    num_invalide_json = 0
+    output_cmd = 'jq \'length != 0, unique\' ' + file + ' --compact-output -M |cat'
+    try:
+        result_jq = str(subprocess.check_output(output_cmd, shell=True))
+        num_valide_json, num_invalide_json = save_json_result(result_jq, file, output_file, subdir, num_valide_json,
+                                                              num_invalide_json)
+    except subprocess.CalledProcessError as e:
+        output = e.output
+        #print(output)
+        with open('invalide_data.txt', 'a') as f:
+            f.write(result_jq + '\n')
+            num_invalide_json = num_invalide_json + 1
+    return num_valide_json, num_invalide_json
+
+def send_data_s3(output_file_name,zipped_file):
+    #print( "--------------send data s3---------------- ")    
+    bucketName = "prod-999404"
+    Key = zipped_file
+    outPutname = output_file_name
+    s3 = boto3.client('s3')
+    s3.upload_file(Key, bucketName, outPutname)
+
+def get_date():
+    time = datetime.datetime.now()
+    return time
+
+
+def process_json(lock, output_file, dir, path):
+    print(dir)
+    lock.acquire()
+    print("PID: %s, Process Name: %s, Thread Name: %s" % (
+        os.getpid(), multiprocessing.current_process().name, threading.current_thread().name))
+    num_v = 0
+    num_inv = 0
+    #print(' ---------------------  process_json ------------------------')
+    # GET FILES
+    for topdir in dir:
+        if topdir != 'readytogo' and topdir != "mark.start" and topdir != "WW3SC999404.sh":
+            dir_path = path + '/' + topdir
+            for subdir in listdir(dir_path): 
+                folder = dir_path + '/' + subdir
+                #   IF IS A FOLDER      AND       FOLDER IS NOT EMPTY
+                if (not (isfile(folder)) and (len(os.listdir(folder)) != 0)):
+                    # output_file = /home/syrine/data/180404/topdir/subdir/$subdir-$topdir-$METIM-$MERAND-$MEEC2
+                    for file in listdir(folder):
+                        #print(file)
+                        if (isfile(folder + '/' + file) and file.find('.json')):
+                            new_path = folder + '/' + file
+                            # get data TO Test and get for this data is it valide ( num_valide_json = 1 and num_invalide_json = 0 ) or not
+                            num_valide_json, num_invalide_json = get_data(new_path, subdir, output_file)
+                            #print(file + ' : the file is valide = ' + str(num_valide_json) + ' and invalide = ' + str(
+                                num_invalide_json))
+                            num_inv = num_inv + num_invalide_json
+                            num_v = num_v + num_valide_json
+                            os.system("sudo rm "+new_path)
+    q_invalide.put(num_inv)
+    q_valide.put(num_v)
+    lock.release()
+
+
+def api_call(url, data):
+    #print(data)
+    headers = {"Content-Type": "application/json"}
+    r = requests.put(url, data=data, headers=headers)
+    return r
+
+
+def send_monitoring_data(date, START_date_second, END_date_seconnd, num_valide_json, num_invalide_json, MEEC2):
+    print("--> send monitoring data : ")
+    START_date = date.strftime("%Y-%m-%dT%H:%M:%SZ")
+    #print(START_date)
+    element = {}
+    element['meec2'] = MEEC2
+    element['release_date'] = START_date
+    element['invalide_data'] = int(num_invalide_json)
+    element['valide_data'] = int(num_valide_json)
+    element['execution_time'] = int(END_date_seconnd - START_date_second)
+
+    data_json = {}
+    data_json["data_json"] = element
+    #print(data_json)
+    data = str(data_json)
+    new_data = data.replace('\'', '\"')
+    #print(new_data)
+
+    i = 0
+    test_not_id_found = -1
+    url_elasticsearch = "https://search-monitoring-42signatures-aay4pv4it6ptsq4efs57zezpoi.eu-west-1.es.amazonaws.com/"
+    while (test_not_id_found):
+        i = i + 1
+        #print("test id =" + str(i))
+        url = url_elasticsearch + "json_data_index/_doc/" + str(i)
+        #print(url)
+        r = requests.get(url).content
+        if (str(r).find('false') != -1):
+            test_not_id_found = 0
+    url = url_elasticsearch + "json_data_index/_doc/" + str(i)
+    r = api_call(url, new_data)
+    print(r.content)
+
+
+def get_folders(path, topdirs):
+    topdir1 = []
+    topdir2 = []
+    topdir3 = []
+    topdir4 = []
+    list = os.listdir(path)
+    #print(list[0])
+    i = 0
+    while (i < len(os.listdir(path)) - 1):
+        if (0 <= i < int(len(os.listdir(path)) / 4)):
+            i = i + 1
+            topdir1.append(list[i])
+        if (int(len(os.listdir(path)) / 4) <= i < int(len(os.listdir(path)) / 2)):
+            i = i + 1
+            topdir2.append(list[i])
+        if (int(len(os.listdir(path)) / 2) <= i < int(len(os.listdir(path)) * 3 / 4)):
+            i = i + 1
+            topdir3.append(list[i])
+        if (int(len(os.listdir(path)) * 3 / 4) <= i < int(len(os.listdir(path)))):
+            i = i + 1
+            topdir4.append(list[i])
+    topdirs.append(topdir1)
+    topdirs.append(topdir2)
+    topdirs.append(topdir3)
+    topdirs.append(topdir4)
+    return topdirs
+
+
+if __name__ == "__main__":
+
+    # parser = argparse.ArgumentParser()
+    # parser.add_argument('--directory')
+    # parser.add_argument('--idclient')
+    # args = parser.parse_args()
+    # args = vars(args)
+
+    cmd = 'wget -q -O - http://instance-data/latest/meta-data/instance-id'
+    #meec2 = str(os.system(cmd))
+    meec2 = os.popen(cmd).read()
+    id_client = '999404'
+    metim = datetime.datetime.now().strftime("%Y-%m-%d-%H")
+    path = '/opt/app/gone/io/received/' + id_client
+    merand = str(rd.randint(10000000, 99999999))
+    output_file = path + '/readytogo/' + metim + '-' + merand + '.' + meec2
+
+    # KEEP TRACK OF TAR START TIME TO REMOVE LATER FILES
+    if not os.path.exists(path + '/readytogo'):
+        os.makedirs(path + '/readytogo')
+
+    date = get_date()
+
+    start_date = date.strftime("%d-%m-%Y-%H:%M:%S")
+    print('START date = ' + start_date)
+    
